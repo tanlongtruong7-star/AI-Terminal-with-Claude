@@ -1,42 +1,48 @@
-name: Build AI Terminal for Windows
+name: 🚀 Build AI Terminal for Windows (CN)
 
 on:
   push:
     tags:
-      - 'v*.*.*'  # 只有打 v1.0.0 这类 tag 才触发构建
+      - 'v*.*.*'  # 只有打 tag 才触发构建
 
 jobs:
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 20
+
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: 🟢 Setup Node.js (v18)
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: npm
+          cache: 'npm'
 
-      - name: Setup Python (required by node-pty)
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
+      - name: 🔧 Install dependencies
         run: npm ci
 
-      - name: Build Windows installer (with CN mirror)
+      - name: ⚙️ Build Windows installer (CN version)
         run: |
           npm run build:win:cn
-          echo "=== Checking dist folder ==="
+        env:
+          # 避免 Electron 下载失败（用国内镜像）
+          ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
+          ELECTRON_BUILDER_BINARIES_MIRROR: "https://npmmirror.com/mirrors/electron-builder-binaries/"
+
+      - name: 🔍 Debug: Show dist folder structure
+        run: |
+          echo "=== Full dist directory ==="
           dir dist /s
         shell: cmd
 
-      - name: Upload .exe as artifact (if exists)
+      - name: 📤 Upload .exe as Artifact
         uses: actions/upload-artifact@v4
-        if: always()  # 即使失败也尝试上传，方便调试
+        if: always()
         with:
-          name: AI-Terminal-Windows
-          path: dist/*.exe
-          if-no-files-found: warn  # 没找到也不报错，只警告
+          name: AI-Terminal-Windows-Installer
+          path: |
+            dist/cn/**/*.exe
+            dist/cn/**/*.blockmap
+          if-no-files-found: error  # 关键！找不到就报错，不糊弄
