@@ -48,6 +48,7 @@ jobs:
         run: npm run build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max-old-space-size=8192"
       
       # 如果需要 Mac 构建，取消注释：
       # - name: Build Electron app (macOS)
