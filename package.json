@@ -26,9 +26,8 @@
     ],
     "extraResources": [
       {
-        "from": "build/edition-config/",
-        "to": "edition-config/",
-        "filter": ["**/*.json"]
+        "from": "build/edition-config",
+        "to": "edition-config"
       },
       {
         "from": "resources/update-notes.json",
