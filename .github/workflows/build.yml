@@ -29,8 +29,19 @@ jobs:
           node-version: '20'
           cache: 'npm'
       
+      - name: Delete package-lock.json if exists
+        run: |
+          if (Test-Path package-lock.json) { Remove-Item package-lock.json }
+        shell: pwsh
+        continue-on-error: true
+      
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
+      
+      - name: Rebuild native modules for Electron
+        if: matrix.os == 'windows-latest'
+        run: npx electron-rebuild
+        continue-on-error: true
       
       - name: Build Electron app (Windows)
         if: matrix.os == 'windows-latest'
