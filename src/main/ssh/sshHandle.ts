@@ -410,7 +410,7 @@ export const attemptSecondaryConnection = async (event, connectionInfo, ident) =
 }
 
 const handleAttemptConnection = async (event, connectionInfo, resolve, reject, retryCount) => {
-  const { id, host, port, username, password, privateKey, passphrase, agentForward, needProxy, proxyConfig, connIdentToken } = connectionInfo
+  const { id, host, port, username, password, privateKey, passphrase, agentForward, needProxy, proxyConfig, connIdentToken, x11Forward } = connectionInfo
   retryCount++
 
   connectionStatus.set(id, { isVerified: false }) // Update connection status
@@ -797,7 +797,7 @@ export const registerSSHHandlers = () => {
     }))
   })
 
-  ipcMain.handle('ssh:shell', async (event, { id, terminalType }) => {
+  ipcMain.handle('ssh:shell', async (event, { id, terminalType, x11Forward }) => {
     // Check if it's a JumpServer connection
     if (jumpserverConnections.has(id)) {
       // Use JumpServer shell handling
@@ -1026,15 +1026,27 @@ export const registerSSHHandlers = () => {
       setTimeout(() => {
         if (!isConnected()) return reject(new Error('The connection has been disconnected after a delay'))
 
-        conn.shell({ term: termType }, (err, stream) => {
+        // X11 转发配置 (类似 Xshell)
+        const shellOptions: any = { term: termType }
+        if (x11Forward) {
+          shellOptions.x11 = {
+            single: false,
+            screen: 0,
+            protocol: 'MIT-MAGIC-COOKIE-1',
+            cookie: undefined // 自动生成 cookie
+          }
+          console.info(`[${id}] X11 forwarding enabled`)
+        }
+
+        conn.shell(shellOptions, (err, stream) => {
           if (err) {
             console.warn(`[${id}] shell() start error: ${err.message}`)
             return tryExecFallback(fallbackExecs, resolve, reject)
           }
 
-          console.info(`[${id}] shell() Successfully started`)
+          console.info(`[${id}] shell() Successfully started${x11Forward ? ' with X11 forwarding' : ''}`)
           handleStream(stream, 'shell')
-          resolve({ status: 'success', message: 'Shell has started' })
+          resolve({ status: 'success', message: 'Shell has started', x11Enabled: !!x11Forward })
         })
       }, delayMs)
     })

@@ -13,6 +13,7 @@ process.env.IS_DEV = is.dev ? 'true' : 'false'
 import { registerSSHHandlers } from './ssh/sshHandle'
 import { registerLocalSSHHandlers } from './ssh/localSSHHandle'
 import { registerRemoteTerminalHandlers } from './ssh/agentHandle'
+import { registerLocalFileHandlers } from './ssh/localFileHandle'
 import { autoCompleteDatabaseService, ChatermDatabaseService, setCurrentUserId } from './storage/database'
 import { getGuestUserId } from './storage/db/connection'
 import { Controller } from './agent/core/controller'
@@ -175,6 +176,7 @@ app.whenReady().then(async () => {
   registerSSHHandlers()
   registerLocalSSHHandlers()
   registerRemoteTerminalHandlers()
+  registerLocalFileHandlers()
   registerUpdater(mainWindow)
   // Load all plugins
   loadAllPlugins()

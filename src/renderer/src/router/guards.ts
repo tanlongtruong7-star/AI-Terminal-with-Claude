@@ -1,18 +1,63 @@
-import { getUserInfo } from '@/utils/permission'
+import { getUserInfo, setUserInfo } from '@/utils/permission'
 import { dataSyncService } from '@/services/dataSyncService'
+import { shortcutService } from '@/services/shortcutService'
+
+// 自动以访客身份登录（已删除登录功能）
+const autoGuestLogin = async () => {
+  localStorage.removeItem('login-skipped')
+  localStorage.removeItem('ctm-token')
+  localStorage.removeItem('jms-token')
+  localStorage.removeItem('userInfo')
+  
+  localStorage.setItem('login-skipped', 'true')
+  localStorage.setItem('ctm-token', 'guest_token')
+  
+  const guestUserInfo = {
+    uid: 999999999,
+    username: 'guest',
+    name: 'Guest',
+    email: 'guest@chaterm.ai',
+    token: 'guest_token'
+  }
+  setUserInfo(guestUserInfo)
+  
+  const api = window.api as any
+  const dbResult = await api.initUserDatabase({ uid: 999999999 })
+  
+  if (dbResult.success) {
+    shortcutService.init()
+    return true
+  }
+  return false
+}
 
 export const beforeEach = async (to, _from, next) => {
   const token = localStorage.getItem('ctm-token')
   const isSkippedLogin = localStorage.getItem('login-skipped') === 'true'
   const isDev = import.meta.env.MODE === 'development'
+  
+  // 如果访问登录页，直接重定向到主页（已删除登录功能）
   if (to.path === '/login') {
-    if (isSkippedLogin) {
-      localStorage.removeItem('login-skipped')
-      localStorage.removeItem('ctm-token')
-      localStorage.removeItem('jms-token')
-      localStorage.removeItem('userInfo')
+    // 自动以访客身份登录
+    const success = await autoGuestLogin()
+    if (success) {
+      next('/')
+    } else {
+      console.error('Auto guest login failed')
+      next('/')
     }
-    next()
+    return
+  }
+
+  // 如果没有 token，自动以访客身份登录
+  if (!token) {
+    const success = await autoGuestLogin()
+    if (success) {
+      next()
+    } else {
+      console.error('Auto guest login failed')
+      next()
+    }
     return
   }
 
@@ -29,20 +74,15 @@ export const beforeEach = async (to, _from, next) => {
           next('/')
         }
       } else {
-        console.error('Database initialization failed, redirecting to login page')
-        localStorage.removeItem('login-skipped')
-        localStorage.removeItem('ctm-token')
-        localStorage.removeItem('jms-token')
-        localStorage.removeItem('userInfo')
-        next('/login')
+        console.error('Database initialization failed')
+        // 重新初始化访客登录
+        await autoGuestLogin()
+        next('/')
       }
     } catch (error) {
       console.error('Database initialization failed:', error)
-      localStorage.removeItem('login-skipped')
-      localStorage.removeItem('ctm-token')
-      localStorage.removeItem('jms-token')
-      localStorage.removeItem('userInfo')
-      next('/login')
+      await autoGuestLogin()
+      next('/')
     }
     return
   }
@@ -61,11 +101,13 @@ export const beforeEach = async (to, _from, next) => {
           })
           next()
         } else {
-          console.error('Database initialization failed, redirecting to login page')
-          next('/login')
+          console.error('Database initialization failed')
+          await autoGuestLogin()
+          next('/')
         }
       } else {
-        next('/login')
+        await autoGuestLogin()
+        next('/')
       }
     } catch (error) {
       console.error('Processing failed:', error)
@@ -77,10 +119,12 @@ export const beforeEach = async (to, _from, next) => {
         next()
         return
       }
-      next('/login')
+      await autoGuestLogin()
+      next('/')
     }
   } else {
-    next('/login')
+    await autoGuestLogin()
+    next('/')
   }
 }
 
