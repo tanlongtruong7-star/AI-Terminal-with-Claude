@@ -33,6 +33,9 @@
     "type": "git",
     "url": "https://github.com/tanlongtruong7-star/AI-Terminal-with-Claude.git"
   },
+  "dependencies": {
+    "ant-design-vue": "^4.2.1"
+  },
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
