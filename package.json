@@ -4,8 +4,13 @@
   "description": "AI Terminal with Claude",
   "main": "out/main/index.js",
   "scripts": {
+    "dev": "electron-vite dev",
+    "build": "cross-env NODE_ENV=production electron-vite build",
     "build:cn": "cross-env NODE_ENV=production electron-vite build",
-    "build:win:cn": "npm run build:cn && electron-builder --win --config electron-builder.cn.yml"
+    "build:win": "npm run build && electron-builder --win",
+    "build:win:cn": "npm run build:cn && electron-builder --win --config electron-builder.cn.yml",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux"
   },
   "build": {
     "appId": "com.chaterm.app",
