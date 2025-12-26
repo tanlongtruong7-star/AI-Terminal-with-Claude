@@ -31,6 +31,7 @@ jobs:
           npm run build:win:cn
           echo "=== Checking dist folder ==="
           dir dist /s
+        shell: cmd
 
       - name: Upload .exe as artifact (if exists)
         uses: actions/upload-artifact@v4
