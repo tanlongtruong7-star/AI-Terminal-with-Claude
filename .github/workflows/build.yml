@@ -1,9 +1,9 @@
-name: 🚀 Build AI Terminal for Windows (CN)
+name: Build Windows EXE - Final
 
 on:
   push:
     tags:
-      - 'v*.*.*'  # 只有打 tag 才触发构建
+      - 'v*.*.*'
 
 jobs:
   build-windows:
@@ -11,38 +11,45 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node.js (v18)
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm'
+          cache: npm
 
-      - name: 🔧 Install dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: ⚙️ Build Windows installer (CN version)
+      - name: Build app (generate out/)
+        run: npm run build:cn
+
+      - name: Verify out/ exists
         run: |
-          npm run build:win:cn
+          if not exist "out" (
+            echo ERROR: out/ directory missing! Build failed.
+            exit /b 1
+          )
+          dir out /s
+        shell: cmd
+
+      - name: Build Windows installer (CN)
+        run: npm run build:win:cn
         env:
-          # 避免 Electron 下载失败（用国内镜像）
           ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
           ELECTRON_BUILDER_BINARIES_MIRROR: "https://npmmirror.com/mirrors/electron-builder-binaries/"
 
-      - name: 🔍 Debug: Show dist folder structure
-        run: |
-          echo "=== Full dist directory ==="
-          dir dist /s
+      - name: Show dist content
+        run: dir dist /s
         shell: cmd
 
-      - name: 📤 Upload .exe as Artifact
+      - name: Upload .exe artifact
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: AI-Terminal-Windows-Installer
+          name: ChatTerm-Windows-Installer
           path: |
             dist/cn/**/*.exe
             dist/cn/**/*.blockmap
-          if-no-files-found: error  # 关键！找不到就报错，不糊弄
+          if-no-files-found: error
