@@ -3,7 +3,7 @@ name: Build AI Terminal for Windows
 on:
   push:
     tags:
-      - 'v*.*.*'  # 只有打 Git tag 时才触发构建（如 v1.0.0）
+      - 'v*.*.*'  # 只有打 v1.0.0 这类 tag 才触发构建
 
 jobs:
   build-windows:
@@ -18,7 +18,7 @@ jobs:
           node-version: 18
           cache: npm
 
-      - name: Setup Python
+      - name: Setup Python (required by node-pty)
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -27,10 +27,15 @@ jobs:
         run: npm ci
 
       - name: Build Windows installer (with CN mirror)
-        run: npm run build:win:cn
+        run: |
+          npm run build:win:cn
+          echo "=== Checking dist folder ==="
+          dir dist /s
 
-      - name: Upload .exe as artifact
+      - name: Upload .exe as artifact (if exists)
         uses: actions/upload-artifact@v4
+        if: always()  # 即使失败也尝试上传，方便调试
         with:
           name: AI-Terminal-Windows
           path: dist/*.exe
+          if-no-files-found: warn  # 没找到也不报错，只警告
