@@ -1,55 +1,114 @@
-name: Build Windows EXE - Final
+name: Build and Release
 
 on:
   push:
+    branches: [main, master]
     tags:
-      - 'v*.*.*'
+      - 'v*'
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
-    timeout-minutes: 20
-
+  build:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [windows-latest]
+        # 如果需要其他平台，可以添加：
+        # os: [windows-latest, macos-latest, ubuntu-latest]
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: npm
-
+          node-version: '20'
+          cache: 'npm'
+      
       - name: Install dependencies
         run: npm ci
-
-      - name: Build app (generate out/)
-        run: npm run build:cn
-
-      - name: Verify out/ exists
-        run: |
-          if not exist "out" (
-            echo ERROR: out/ directory missing! Build failed.
-            exit /b 1
-          )
-          dir out /s
-        shell: cmd
-
-      - name: Build Windows installer (CN)
-        run: npm run build:win:cn
+      
+      - name: Build application
+        run: npm run build
         env:
-          ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
-          ELECTRON_BUILDER_BINARIES_MIRROR: "https://npmmirror.com/mirrors/electron-builder-binaries/"
-
-      - name: Show dist content
-        run: dir dist /s
-        shell: cmd
-
-      - name: Upload .exe artifact
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build Electron app (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # 如果需要 Mac 构建，取消注释：
+      # - name: Build Electron app (macOS)
+      #   if: matrix.os == 'macos-latest'
+      #   run: npm run build:mac
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # 如果需要 Linux 构建，取消注释：
+      # - name: Build Electron app (Linux)
+      #   if: matrix.os == 'ubuntu-latest'
+      #   run: npm run build:linux
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload Windows artifacts
+        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: ChatTerm-Windows-Installer
+          name: windows-build
           path: |
-            dist/cn/**/*.exe
-            dist/cn/**/*.blockmap
-          if-no-files-found: error
+            dist/*.exe
+            dist/*.msi
+            dist/*.zip
+          if-no-files-found: warn
+      
+      # 如果需要 Mac 构建产物，取消注释：
+      # - name: Upload macOS artifacts
+      #   if: matrix.os == 'macos-latest'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: macos-build
+      #     path: |
+      #       dist/*.dmg
+      #       dist/*.zip
+      #     if-no-files-found: warn
+      
+      # 如果需要 Linux 构建产物，取消注释：
+      # - name: Upload Linux artifacts
+      #   if: matrix.os == 'ubuntu-latest'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: linux-build
+      #     path: |
+      #       dist/*.AppImage
+      #       dist/*.deb
+      #       dist/*.rpm
+      #     if-no-files-found: warn
+
+  # 发布到 GitHub Releases（仅在创建 tag 时触发）
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
