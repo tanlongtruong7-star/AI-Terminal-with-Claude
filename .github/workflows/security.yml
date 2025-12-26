@@ -1,10 +1,8 @@
 name: Security Scan
 
+# 暂时禁用安全扫描工作流
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:  # 只能手动触发
 
 jobs:
   # Dependency vulnerability audit
