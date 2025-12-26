@@ -26,6 +26,13 @@ const autoGuestLogin = async () => {
   
   if (dbResult.success) {
     shortcutService.init()
+    // 显示主窗口
+    try {
+      await api.mainWindowInit(dbResult.theme || 'dark')
+      await api.mainWindowShow()
+    } catch (e) {
+      console.error('Failed to show main window:', e)
+    }
     return true
   }
   return false
