@@ -1,0 +1,36 @@
+name: Build AI Terminal for Windows
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # 只有打 Git tag 时才触发构建（如 v1.0.0）
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows installer (with CN mirror)
+        run: npm run build:win:cn
+
+      - name: Upload .exe as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Terminal-Windows
+          path: dist/*.exe
