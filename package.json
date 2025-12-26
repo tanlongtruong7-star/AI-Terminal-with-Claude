@@ -44,6 +44,7 @@
     "cross-env": "^7.0.3",
     "@vitejs/plugin-vue": "^4.6.2",
     "unplugin-vue-components": "^0.27.0",
-    "unplugin-auto-import": "^0.17.5"
+    "unplugin-auto-import": "^0.17.5",
+	"@electron-toolkit/tsconfig": "^1.0.1"
   }
 }
