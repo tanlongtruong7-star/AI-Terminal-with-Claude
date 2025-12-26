@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          # 不使用 npm 缓存，因为 package-lock.json 可能不同步
       
       - name: Delete package-lock.json if exists
         run: |
