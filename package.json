@@ -104,7 +104,8 @@
     "dockview-vue": "^1.12.0",
     "xterm-addon-search": "^0.13.0",
     "strip-ansi": "^7.1.0",
-    "zxcvbn": "^4.4.2"
+    "zxcvbn": "^4.4.2",
+    "crypto-js": "^4.2.0"
   },
   "devDependencies": {
     "electron": "^28.0.0",
