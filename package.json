@@ -17,14 +17,27 @@
     "productName": "ChatTerm-CN",
     "asar": true,
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "files": [
       "out/**/*",
       "package.json"
     ],
+    "extraResources": [
+      {
+        "from": "build/edition-config/",
+        "to": "edition-config/",
+        "filter": ["**/*.json"]
+      },
+      {
+        "from": "resources/update-notes.json",
+        "to": "update-notes.json"
+      }
+    ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "resources/icon.ico"
     },
     "nsis": {
       "oneClick": false,
